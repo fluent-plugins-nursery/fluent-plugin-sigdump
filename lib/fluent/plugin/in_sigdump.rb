@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'sigdump'
+require "sigdump"
 
 module Fluent
   module Plugin
@@ -32,8 +32,9 @@ module Fluent
 
       def configure(conf)
         super
-        # TODO strict validaton
-        $log.error("Output directory doesn't exist: #{@dir_path}") unless Dir.exist?(@dir_path)
+        unless Dir.exist?(@dir_path)
+          raise Fluent::ConfigError, "'dir_path' does not exist: #{@dir_path}"
+        end
       end
 
       def start
