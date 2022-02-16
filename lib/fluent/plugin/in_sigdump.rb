@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'sigdump'
+
 module Fluent
   module Plugin
 
@@ -25,9 +27,13 @@ module Fluent
       config_param :tag, :string, default: "sigdump"
       desc "The interval time between data collection"
       config_param :scrape_interval, :time, default: 60
+      desc "The output directory path"
+      config_param :dir_path, :string, default: "/tmp"
 
       def configure(conf)
         super
+        # TODO strict validaton
+        $log.error("Output directory doesn't exist: #{@dir_path}") unless Dir.exist?(@dir_path)
       end
 
       def start
@@ -40,7 +46,13 @@ module Fluent
       end
 
       def on_timer
-        Fluent::EventTime.now
+        time_stamp = Time.at(Fluent::EventTime.now).strftime("%Y%m%d_%H%M%S")
+        filename = "sigdump_#{time_stamp}.txt"
+        ouput_path = "#{@dir_path}/#{filename}"
+
+        Sigdump.dump(ouput_path)
+
+        $log.debug("Output sigdump file: #{ouput_path}")
       end
     end
   end
