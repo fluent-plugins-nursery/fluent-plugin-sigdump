@@ -15,6 +15,7 @@
 
 require "sigdump"
 require "fileutils"
+require 'fluent/plugin/file_util'
 
 module Fluent
   module Plugin
@@ -35,6 +36,9 @@ module Fluent
         super
 
         @dir_permission = system_config.dir_permission || Fluent::DEFAULT_DIR_PERMISSION
+        unless Fluent::FileUtil.writable_p?(@dir_path)
+          raise Fluent::ConfigError, "'dir_path' doesn't have enough permission.: #{@dir_path}"
+        end
       end
 
       def start
