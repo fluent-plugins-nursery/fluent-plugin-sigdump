@@ -66,5 +66,6 @@ class SigdumpInputTest < Test::Unit::TestCase
 
   def clean_result
     FileUtils.rm(all_result_filepaths)
+    Dir.mkdir(RESULT_DIR) unless Dir.exist?(RESULT_DIR)
   end
 end
