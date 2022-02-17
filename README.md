@@ -1,11 +1,51 @@
 # fluent-plugin-sigdump
 
-[Fluentd](https://fluentd.org/) plugin to collect debug information.
+[Fluentd](https://fluentd.org/) plugin to collect debug information of Fluentd.
 
  | Platform | Support Version       |
  | -------- | --------------------- |
  | Fluentd  | Fluentd v1.x          |
  | Ruby     | Ruby 2.7.x / 3.1.x    |
+
+This plugin periodically dumps backtrace and memory profile of Fluentd by using [sigdump](https://github.com/fluent/sigdump).
+
+In Unix-like environments, you can get the same sigdump by sending `$ kill -CONT {Fluentd-pid}`.  
+You can use this plugin to save sigdump results periodically, or to use sigdump in Windows environment.
+
+Although this is `input` plugin, this plugin directly outputs files and doesn't use `emit` function.  
+So this plugin cannot work with `filter` plugins or `output` plugins.
+
+## Installation
+
+**TODO**
+
+## Configuration
+
+### List of Options
+
+|       Option      |                Description                |  Default  |
+|-------------------|-------------------------------------------|-----------|
+| `tag`             | Tag of the output events                  | `sigdump` |
+| `scrape_interval` | The interval time between data collection | `60`      |
+| `dir_path`        | The output directory path                 | `/tmp`    |
+
+### Example Configuration
+
+```
+<source>
+  @type sigdump
+  tag sigdump         # optional
+  scrape_interval 60  # optional
+  dir_path "/dump"    # optional
+</source>
+```
+
+You can use Unix-style path such as `/dump` in Windows too.  
+You can also use Windows-style path such as `C:\\dump` in Windows.
+
+### Output format
+
+Please refer to [sigdump#sample-outout](https://github.com/fluent/sigdump#sample-outout).
 
 ## Copyright
 
