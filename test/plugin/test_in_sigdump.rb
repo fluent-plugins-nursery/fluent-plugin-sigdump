@@ -31,15 +31,6 @@ class SigdumpInputTest < Test::Unit::TestCase
     assert_equal(10, d.instance.scrape_interval)
   end
 
-  def test_configure_invalid
-    assert_raise(Fluent::ConfigError) do
-      d = create_driver(%[
-        @type sigdump
-        dir_path "test/plugin/not_existing_dir"
-      ])
-    end
-  end
-
   def test_output
     d = create_driver(%[
       @type sigdump
@@ -65,7 +56,10 @@ class SigdumpInputTest < Test::Unit::TestCase
   end
 
   def clean_result
+    return unless Dir.exist?(RESULT_DIR)
+
     FileUtils.rm(all_result_filepaths)
-    Dir.mkdir(RESULT_DIR) unless Dir.exist?(RESULT_DIR)
+    # Need to remove the directory in order to check the plugin can create the directly.
+    Dir.rmdir(RESULT_DIR)
   end
 end

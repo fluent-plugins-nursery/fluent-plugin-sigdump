@@ -14,6 +14,7 @@
 # limitations under the License.
 
 require "sigdump"
+require "fileutils"
 
 module Fluent
   module Plugin
@@ -32,9 +33,8 @@ module Fluent
 
       def configure(conf)
         super
-        unless Dir.exist?(@dir_path)
-          raise Fluent::ConfigError, "'dir_path' does not exist: #{@dir_path}"
-        end
+
+        @dir_permission = system_config.dir_permission || Fluent::DEFAULT_DIR_PERMISSION
       end
 
       def start
@@ -47,6 +47,18 @@ module Fluent
       end
 
       def on_timer
+        setup
+        dump
+      end
+
+      private
+
+      def setup
+        return if Dir.exist?(@dir_path)
+        FileUtils.mkdir_p(@dir_path, mode: @dir_permission)
+      end
+
+      def dump
         time_stamp = Time.at(Fluent::EventTime.now).strftime("%Y%m%d_%H%M%S")
         filename = "sigdump_#{time_stamp}.txt"
         ouput_path = "#{@dir_path}/#{filename}"
