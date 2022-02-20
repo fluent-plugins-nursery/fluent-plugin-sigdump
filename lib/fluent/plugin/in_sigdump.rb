@@ -36,7 +36,7 @@ module Fluent
         super
 
         @dir_permission = system_config.dir_permission || Fluent::DEFAULT_DIR_PERMISSION
-        unless Fluent::FileUtil.writable_p?(@dir_path)
+        unless Fluent::FileUtil.writable_p?(get_output_path())
           raise Fluent::ConfigError, "'dir_path' doesn't have enough permission.: #{@dir_path}"
         end
       end
@@ -62,14 +62,17 @@ module Fluent
         FileUtils.mkdir_p(@dir_path, mode: @dir_permission)
       end
 
-      def dump
+      def get_output_path
         time_stamp = Time.at(Fluent::EventTime.now).strftime("%Y%m%d_%H%M%S")
         filename = "sigdump_#{time_stamp}.txt"
-        ouput_path = "#{@dir_path}/#{filename}"
+        return "#{@dir_path}/#{filename}"
+      end
 
-        Sigdump.dump(ouput_path)
+      def dump
+        output_path = get_output_path()
+        Sigdump.dump(output_path)
 
-        $log.debug("Output sigdump file: #{ouput_path}")
+        $log.debug("Output sigdump file: #{output_path}")
       end
     end
   end
