@@ -29,7 +29,7 @@ module Fluent
       desc "Tag of the output events"
       config_param :tag, :string, default: "sigdump"
       desc "The interval time between data collection"
-      config_param :scrape_interval, :time, default: 60
+      config_param :scrape_interval, :time, default: 900
       desc "The output directory path"
       config_param :dir_path, :string, default: "/tmp"
 
