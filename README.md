@@ -2,10 +2,10 @@
 
 [Fluentd](https://fluentd.org/) plugin to collect debug information of Fluentd.
 
- | Platform | Support Version       |
- | -------- | --------------------- |
- | Fluentd  | Fluentd v1.x          |
- | Ruby     | Ruby 2.7.x / 3.1.x    |
+ | Platform |  Support Version   |
+ |----------|--------------------|
+ | Fluentd  | >= Fluentd v1.9.3  |
+ | Ruby     | Ruby 2.7.x / 3.1.x |
 
 This plugin periodically dumps backtrace and memory profile of Fluentd by using [sigdump](https://github.com/fluent/sigdump).
 
