@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'fluent/plugin/input'
 require "sigdump"
 require "fileutils"
 require 'fluent/plugin/file_util'
