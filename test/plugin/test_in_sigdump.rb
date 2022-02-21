@@ -31,7 +31,23 @@ class SigdumpInputTest < Test::Unit::TestCase
     assert_equal(10, d.instance.scrape_interval)
   end
 
-  def test_output
+  def test_output_to_new_dir
+    d = create_driver(%[
+      @type sigdump
+      dir_path "#{RESULT_DIR}"
+      scrape_interval 3
+    ])
+
+    d.run do
+      sleep(10)
+    end
+
+    assert_equal(true, all_result_filepaths.length >= 2)
+  end
+
+  def test_output_to_existing_dir
+    FileUtils.mkdir_p(RESULT_DIR)
+
     d = create_driver(%[
       @type sigdump
       dir_path "#{RESULT_DIR}"
