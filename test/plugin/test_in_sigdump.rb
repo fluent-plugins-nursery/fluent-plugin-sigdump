@@ -17,7 +17,7 @@ class SigdumpInputTest < Test::Unit::TestCase
     ])
     assert_equal("sigdump", d.instance.tag)
     assert_equal(RESULT_DIR, d.instance.dir_path)
-    assert_equal(60, d.instance.scrape_interval)
+    assert_equal(900, d.instance.scrape_interval)
   end
 
   def test_configure_customize

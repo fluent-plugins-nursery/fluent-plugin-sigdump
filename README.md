@@ -26,7 +26,7 @@ So this plugin cannot work with `filter` plugins or `output` plugins.
 |       Option      |                Description                |  Default  |
 |-------------------|-------------------------------------------|-----------|
 | `tag`             | Tag of the output events                  | `sigdump` |
-| `scrape_interval` | The interval time between data collection | `60`      |
+| `scrape_interval` | The interval time between data collection | `900`      |
 | `dir_path`        | The output directory path                 | `/tmp`    |
 
 ### Example Configuration
@@ -35,7 +35,7 @@ So this plugin cannot work with `filter` plugins or `output` plugins.
 <source>
   @type sigdump
   tag sigdump         # optional
-  scrape_interval 60  # optional
+  scrape_interval 900  # optional
   dir_path "/dump"    # optional
 </source>
 ```
