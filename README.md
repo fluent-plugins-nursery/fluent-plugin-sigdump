@@ -17,7 +17,9 @@ So this plugin cannot work with `filter` plugins or `output` plugins.
 
 ## Installation
 
-**TODO**
+```sh
+% gem install fluent-plugin-sigdump
+```
 
 ## Configuration
 
