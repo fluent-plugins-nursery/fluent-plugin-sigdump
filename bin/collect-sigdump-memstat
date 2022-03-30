@@ -1,0 +1,169 @@
+#!/usr/bin/env ruby
+
+require 'time'
+
+class SigdumpMemStat
+  attr_accessor :time, :pid
+  attr_accessor :gc_stat, :gc_stat_keys
+  attr_accessor :builtin_objects
+  attr_accessor :all_objects
+  attr_accessor :string_array_hash_stat
+
+  SECTION_NONE = 0
+  SECTION_HEAD = 1
+  SECTION_STACK_TRACE = 2
+  SECTION_GC_STAT = 3
+  SECTION_BUILTIN_OBJECTS = 4
+  SECTION_ALL_OBJECTS = 5
+  SECTION_STRING_ARRAY_HASH = 6
+
+  MAJOR_OBJECT_KEYS = [:String, :Array, :Integer, :Hash, :Time, :Proc, :Class]
+  STRING_ARRAY_HASH_KEYS = [:string_bytes, :array_elements, :hash_pairs]
+
+  def initialize(path)
+    @path = path
+    @pid = nil
+    @time = nil
+    @section = SECTION_NONE
+    @gc_stat = {}
+    @gc_stat_keys = []
+    @builtin_objects = {}
+    @all_objects = {}
+    @string_array_hash_stat = {}
+
+    parse
+  end
+
+  def parse
+    File.open(@path, "r") do |file|
+      file.each_line do |line|
+        if line[2] != " "
+          parse_section_start(line)
+          next
+        end
+
+        case @section
+        when SECTION_GC_STAT
+          parse_gc_stat(line)
+        when SECTION_BUILTIN_OBJECTS
+          parse_builtin_objects(line)
+        when SECTION_ALL_OBJECTS
+          parse_all_objects(line)
+        when SECTION_STRING_ARRAY_HASH
+          parse_string_array_hash_stat(line)
+        end
+      end
+    end
+  end
+
+  def parse_section_start(line)
+    if line.start_with?("Sigdump at ")
+      @section = SECTION_HEAD
+      parse_head(line)
+    elsif line.start_with?("  Thread #<Thread:")
+      @section = SECTION_STACK_TRACE
+    elsif line.start_with?("  GC stat:")
+      @section = SECTION_GC_STAT
+    elsif line.start_with?("  Built-in objects:")
+      @section = SECTION_BUILTIN_OBJECTS
+    elsif line.start_with?("  All objects:")
+      @section = SECTION_ALL_OBJECTS
+    elsif line.strip.match(/^String [0-9,]+ bytes$/)
+      @section = SECTION_STRING_ARRAY_HASH
+      parse_string_array_hash_stat(line)
+    end
+  end
+
+  def parse_head(line)
+    return if @time
+    # e.g.) "Sigdump at 2022-03-29 06:49:45 +0900 process 19308"
+    matches = line.strip.match(/^Sigdump at (?<time>[0-9\-\s\:\+]*) process (?<pid>[0-9]+) (.+)$/)
+    if matches
+      @time = Time.parse(matches[:time])
+      @pid = matches[:pid]
+    end
+  end
+
+  def parse_gc_stat(line)
+    # e.g.) "      heap_allocated_pages: 378"
+    matches = line.strip.match(/^(?<key>.*): (?<value>[0-9]+)$/)
+    if matches
+      @gc_stat[matches[:key].to_sym] = matches[:value].to_i
+      @gc_stat_keys << matches[:key].to_sym
+    end
+  end
+
+  def parse_builtin_objects(line)
+    # e.g.) "   154,078: TOTAL"
+    matches = line.strip.match(/^(?<num>[0-9,]+): (?<object>.*)$/)
+    if matches
+      @builtin_objects[matches[:object].to_sym] = matches[:num].delete(",").to_i
+    end
+  end
+
+  def parse_all_objects(line)
+    # e.g.) "    47,266: String"
+    matches = line.strip.match(/^(?<num>[0-9,]+): (?<object>.*)$/)
+    if matches
+      @all_objects[matches[:object].to_sym] = matches[:num].delete(",").to_i
+    end
+  end
+
+  def parse_string_array_hash_stat(line)
+    # e.g.) "  String 2,254,051 bytes"
+    matches = line.strip.match(/^(?<type>String|Array|Hash) (?<count>[0-9,]+) (bytes|elements|pairs)$/)
+    if matches
+      value = matches[:count].delete(",").to_i
+      case matches[:type]
+      when "String"
+        @string_array_hash_stat[:string_bytes] = value
+      when "Array"
+        @string_array_hash_stat[:array_elements] = value
+      when "Hash"
+        @string_array_hash_stat[:hash_pairs] = value
+      end
+    end
+  end
+
+  def <=>(obj)
+    self.time <=> obj.time
+  end
+end
+
+def dump_csv(path, stats, hash_name, keys)
+  start_time = stats[0].time
+
+  File.open(path, "w") do |file|
+    # CSV header
+    file.puts("Time,Elpased,#{keys.join(',')}")
+
+    # CSV body
+    stats.each do |stat|
+      line = "#{stat.time},#{stat.time - start_time}"
+      keys.each do |key|
+        line += ",#{stat.send(hash_name)[key]}"
+      end
+      file.puts(line)
+    end
+  end
+end
+
+stats = Dir.glob("sigdump_*.txt").collect { |path|
+  SigdumpMemStat.new(path)
+}.sort
+
+dump_csv("sigdump-collect-gc-stat.csv",
+         stats, :gc_stat, stats[0].gc_stat_keys)
+dump_csv("sigdump-collect-built-in-objects.csv",
+         stats, :builtin_objects, stats[0].builtin_objects.keys)
+dump_csv("sigdump-collect-major-objects.csv",
+         stats, :all_objects,
+         SigdumpMemStat::MAJOR_OBJECT_KEYS)
+dump_csv("sigdump-collect-all-objects.csv",
+         stats, :all_objects,
+         stats.collect { |stat|
+           stat.all_objects.keys
+         }.flatten.uniq)
+dump_csv("sigdump-collect-string-array-hash-stat.csv",
+         stats, :string_array_hash_stat,
+         SigdumpMemStat::STRING_ARRAY_HASH_KEYS)
