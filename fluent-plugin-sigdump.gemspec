@@ -18,6 +18,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake", "~> 13.0"
   s.add_development_dependency "test-unit", "~> 3.3"
 
-  s.add_runtime_dependency "sigdump", "~> 0.2.2"
+  s.add_runtime_dependency "sigdump", "~> 0.2.5"
   s.add_runtime_dependency "fluentd", [">= 1.9.3", "< 2"]
 end
